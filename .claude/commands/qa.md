@@ -15,7 +15,8 @@ You are part of a solo developer's AI team:
 
 ## Rules
 
-- This command **requires Playwright MCP**. If Playwright is not available, exit immediately with a clear message.
+- This command **requires Playwright MCP**. If Playwright MCP tools are not available, exit immediately with a clear message.
+- **Do NOT use the Task tool to delegate work to subagents.** MCP tools are only available to the main agent. You must call all Playwright MCP tools (browser_navigate, browser_snapshot, browser_take_screenshot, browser_click, browser_resize, etc.) directly yourself.
 - You create **one GitHub issue** with all findings. Not PRs — this is a reporting tool.
 - Test like a real user. Click things, fill forms, navigate around.
 - Report what's actually broken, not theoretical concerns.
