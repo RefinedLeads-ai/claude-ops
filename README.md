@@ -79,15 +79,3 @@ The `CLAUDE.md.template` file is a reference for creating project-specific `CLAU
 
 ### @claude mentions
 Comment `@claude <task>` on any issue or PR to trigger Claude with full MCP access.
-
-## Migrating from claude-team
-
-| Old command | New command | What changed |
-|------------|-------------|--------------|
-| `/fix` | `/scan` | Merged with `/improve`, no category caps, Supabase MCP |
-| `/improve` | `/scan` | Merged into `/scan` |
-| `/style` | `/design` | Playwright screenshots, before/after in PR |
-| `/plan` | `/plan` | Added Supabase schema + duplicate issue checks |
-| — | `/qa` | New: Playwright-powered visual testing |
-| — | `/report` | New: Development activity summaries |
-| — | `/health` | New: Project health + CLAUDE.md audit |
