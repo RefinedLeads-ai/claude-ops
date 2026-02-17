@@ -20,6 +20,14 @@ on:
         type: string
         required: false
         default: ''
+      model:
+        description: 'Claude model to use'
+        type: choice
+        options:
+          - claude-opus-4-6
+          - claude-sonnet-4-6
+          - claude-haiku-4-5-20251001
+        default: 'claude-sonnet-4-6'
 
 jobs:
   run-command:
@@ -97,4 +105,4 @@ jobs:
           prompt: ${{ steps.build-prompt.outputs.prompt }}
           allowed_bots: 'claude[bot]'
           show_full_output: 'true'
-          claude_args: '--dangerously-skip-permissions --model claude-opus-4-6'
+          claude_args: '--dangerously-skip-permissions --model ${{ inputs.model }}'
