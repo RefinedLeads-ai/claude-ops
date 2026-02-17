@@ -34,16 +34,16 @@ jobs:
         id: mcp-config
         shell: bash
         run: |
-          MCP_CONFIG='{}'
+          SETTINGS='{"mcpServers":{}}'
 
           # Add Supabase MCP if secrets are available
           if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROJECT_REF" ]; then
-            MCP_CONFIG=$(echo "$MCP_CONFIG" | jq --arg url "https://mcp.supabase.com/mcp?project_ref=$SUPABASE_PROJECT_REF" --arg token "$SUPABASE_ACCESS_TOKEN" '.supabase = {"type": "url", "url": $url, "headers": {"Authorization": ("Bearer " + $token)}}')
+            SETTINGS=$(echo "$SETTINGS" | jq --arg url "https://mcp.supabase.com/mcp?project_ref=$SUPABASE_PROJECT_REF" --arg token "$SUPABASE_ACCESS_TOKEN" '.mcpServers.supabase = {"type": "url", "url": $url, "headers": {"Authorization": ("Bearer " + $token)}}')
           fi
 
           {
-            echo "config<<MCP_DELIMITER"
-            echo "$MCP_CONFIG"
+            echo "settings<<MCP_DELIMITER"
+            echo "$SETTINGS"
             echo "MCP_DELIMITER"
           } >> "$GITHUB_OUTPUT"
         env:
@@ -55,7 +55,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          mcp_config: ${{ steps.mcp-config.outputs.config }}
+          settings: ${{ steps.mcp-config.outputs.settings }}
           additional_permissions: |
             actions: read
           allowed_bots: 'claude[bot]'
