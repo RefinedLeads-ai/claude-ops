@@ -36,10 +36,12 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install Playwright browser
+      - name: Install Playwright MCP and browser
         if: inputs.command == 'design' || inputs.command == 'qa'
         shell: bash
-        run: npx playwright install --with-deps chromium
+        run: |
+          npm install @playwright/mcp@latest
+          npx playwright install --with-deps chromium
 
       - name: Write MCP config to user settings
         shell: bash
