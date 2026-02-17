@@ -1,0 +1,134 @@
+# CLAUDE.md Template
+
+> Copy this file to your project root as `CLAUDE.md` and fill in each section.
+> Every section directly improves the quality of Claude's code review and operations.
+> Delete this instruction block when done.
+
+---
+
+# Project Name
+
+One-sentence description of what this project does.
+
+## Tech Stack
+
+- **Language:** Python 3.x
+- **Framework:** Flask
+- **Database:** Supabase (PostgreSQL + Auth + Storage)
+- **Frontend:** Jinja2 templates + Tailwind CSS
+- **Deployment:** Render (Web Service)
+- **Other:** (Redis, Celery, YOLO, OpenAI, etc.)
+
+## Project Structure
+
+```
+project/
+  app.py                 # Main Flask app, route definitions
+  config.py              # Configuration, env var loading
+  models/                # Database models or query helpers
+  templates/             # Jinja2 HTML templates
+    base.html            # Base layout
+    ...
+  static/                # CSS, JS, images
+  utils/                 # Helper modules
+  tests/                 # Test files
+  requirements.txt       # Python dependencies
+  render.yaml            # Render deployment config (if used)
+```
+
+> Adapt to your actual structure. Include key files and what they do.
+
+## Key Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Homepage / landing page |
+| GET | `/dashboard` | Main app dashboard |
+| POST | `/api/...` | API endpoint for ... |
+
+> List the routes that matter. Not every route — just the ones a reviewer needs to know about.
+
+## Database Schema
+
+> This section is critical for code review quality. Claude uses this to understand data flow.
+
+### Tables
+
+**users**
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK, auto-generated |
+| email | text | unique, not null |
+| created_at | timestamptz | default now() |
+
+**other_table**
+| Column | Type | Notes |
+|--------|------|-------|
+
+> Include relationships: "orders.user_id references users.id"
+> Include RLS policies if applicable.
+
+### RLS Policies
+
+- `users`: Users can read/update their own row
+- `orders`: Users can read their own orders, service role can read all
+
+## Code Conventions
+
+> Each convention here becomes a review criterion. Be specific.
+
+- **Naming:** snake_case for Python, kebab-case for URLs, camelCase for JS
+- **Error handling:** All API endpoints return JSON with `{"error": "message"}` on failure
+- **Auth:** Supabase JWT in Authorization header; `@login_required` decorator on protected routes
+- **Database queries:** Use Supabase client library, not raw SQL
+- **Environment variables:** All secrets in `.env`, loaded via `config.py`, never hardcoded
+- **Commits:** Conventional commits (`fix:`, `feat:`, `chore:`)
+
+## Architecture Decisions
+
+> Prevents Claude from "fixing" intentional choices during code review.
+
+- **Why Flask over FastAPI:** Jinja2 template rendering is core to the product; Flask's integration is simpler
+- **Why Supabase over raw Postgres:** Auth, RLS, realtime, and storage all-in-one; reduces ops burden
+- **Why no ORM:** Direct Supabase client calls are simpler for this scale; ORM adds complexity we don't need
+- **Why X over Y:** (document any non-obvious technical choices)
+
+## Security Model
+
+- **Authentication:** Supabase Auth (email/password, magic link, OAuth)
+- **Authorization:** RLS policies on all tables; service_role key used only in backend
+- **CORS:** Configured for production domain only
+- **Rate limiting:** (describe if applicable)
+- **Secrets management:** `.env` file locally, Render environment variables in production
+
+## Known Issues
+
+> Prevents duplicate work and provides context for reviewers.
+
+- `#42` — File upload occasionally times out on large files (>10MB)
+- The dashboard chart sometimes shows stale data after timezone changes
+- (List anything known but not yet fixed)
+
+## Deployment
+
+- **Platform:** Render
+- **Build command:** `pip install -r requirements.txt`
+- **Start command:** `gunicorn app:app`
+- **Environment variables:** (list non-secret env vars and what they control)
+- **Preview environments:** Render creates them automatically for PRs
+- **Database:** Supabase (external, not managed by Render)
+
+## Development
+
+```bash
+# Setup
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+
+# Run locally
+flask run --debug
+
+# Run tests
+pytest
+```

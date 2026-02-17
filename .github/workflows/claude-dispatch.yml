@@ -1,0 +1,95 @@
+name: Claude Ops Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run'
+        type: choice
+        options:
+          - scan
+          - design
+          - plan
+          - qa
+          - report
+          - health
+          - custom
+        default: 'scan'
+      arguments:
+        description: 'Arguments (e.g., "security" for scan, "dark modern" for design, URL for qa, goal for plan, "last week" for report) or full prompt for custom'
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  run-command:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Configure MCP servers
+        id: mcp-config
+        shell: bash
+        run: |
+          MCP_CONFIG='{}'
+          COMMAND="${{ inputs.command }}"
+
+          # Add Supabase MCP if secrets are available
+          # Used by: scan (database focus), plan, health
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROJECT_REF" ]; then
+            MCP_CONFIG=$(echo "$MCP_CONFIG" | jq --arg url "https://mcp.supabase.com/mcp?project_ref=$SUPABASE_PROJECT_REF" --arg token "$SUPABASE_ACCESS_TOKEN" '.supabase = {"type": "url", "url": $url, "headers": {"Authorization": ("Bearer " + $token)}}')
+          fi
+
+          # Add Playwright MCP only for design and qa commands (saves cost)
+          if [ "$COMMAND" = "design" ] || [ "$COMMAND" = "qa" ]; then
+            MCP_CONFIG=$(echo "$MCP_CONFIG" | jq '.playwright = {"type": "stdio", "command": "npx", "args": ["@anthropic-ai/mcp-playwright@latest", "--headless", "--isolated"]}')
+          fi
+
+          {
+            echo "config<<MCP_DELIMITER"
+            echo "$MCP_CONFIG"
+            echo "MCP_DELIMITER"
+          } >> "$GITHUB_OUTPUT"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Build prompt
+        id: build-prompt
+        shell: bash
+        run: |
+          if [ "${{ inputs.command }}" = "custom" ]; then
+            {
+              echo "prompt<<PROMPT_DELIMITER"
+              echo "${{ inputs.arguments }}"
+              echo "PROMPT_DELIMITER"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "prompt<<PROMPT_DELIMITER"
+              echo "Read the file .claude/commands/${{ inputs.command }}.md and execute the command defined in it exactly as written."
+              echo ""
+              echo "Replace \$ARGUMENTS in the command with: ${{ inputs.arguments }}"
+              echo ""
+              echo "You have full access to the gh CLI for managing issues, labels, and PRs. Follow all instructions in the command file."
+              echo "PROMPT_DELIMITER"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Claude Ops
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          mcp_config: ${{ steps.mcp-config.outputs.config }}
+          prompt: ${{ steps.build-prompt.outputs.prompt }}
+          allowed_bots: 'claude[bot]'
+          claude_args: '--dangerously-skip-permissions --model claude-opus-4-6'
