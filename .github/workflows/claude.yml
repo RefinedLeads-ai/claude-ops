@@ -30,18 +30,18 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Create MCP config
-        id: mcp-config
+      - name: Write MCP config to user settings
         shell: bash
         run: |
-          MCP_CONFIG='{"mcpServers":{}}'
+          mkdir -p ~/.claude
+          SETTINGS='{"mcpServers":{}}'
 
           # Add Supabase MCP if secrets are available
           if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROJECT_REF" ]; then
-            MCP_CONFIG=$(echo "$MCP_CONFIG" | jq --arg url "https://mcp.supabase.com/mcp?project_ref=$SUPABASE_PROJECT_REF" --arg token "$SUPABASE_ACCESS_TOKEN" '.mcpServers.supabase = {"type": "url", "url": $url, "headers": {"Authorization": ("Bearer " + $token)}}')
+            SETTINGS=$(echo "$SETTINGS" | jq --arg url "https://mcp.supabase.com/mcp?project_ref=$SUPABASE_PROJECT_REF" --arg token "$SUPABASE_ACCESS_TOKEN" '.mcpServers.supabase = {"type": "url", "url": $url, "headers": {"Authorization": ("Bearer " + $token)}}')
           fi
 
-          echo "$MCP_CONFIG" > /tmp/mcp-config.json
+          echo "$SETTINGS" > ~/.claude/settings.json
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -54,4 +54,4 @@ jobs:
           additional_permissions: |
             actions: read
           allowed_bots: 'claude[bot]'
-          claude_args: '--dangerously-skip-permissions --model claude-opus-4-6 --mcp-config /tmp/mcp-config.json'
+          claude_args: '--dangerously-skip-permissions --model claude-opus-4-6'
